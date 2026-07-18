@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { useAuthentication } from "../../components/hooks/useAuthentication";
 
 const Register = () => {
   const [displayName, setDisplayName] = useState("");
@@ -9,8 +10,11 @@ const Register = () => {
   const [error, setError] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [showPassConfirmation, setPassConfirmation] = useState(false);
+  const [success, setSuccess] = useState("");
 
-  const handleSubmit = (e) => {
+  const { createUser, error: authError, loading } = useAuthentication();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -24,8 +28,18 @@ const Register = () => {
       setError("As senhas precisam ser iguais");
       return;
     }
-    console.log(user);
+
+    const res = await createUser(user);
+    if (res) {
+      setSuccess("Conta criada com sucesso!");
+    }
   };
+
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
 
   return (
     <div className="min-h-screen bg-blue-950 flex items-center justify-center p-4">
@@ -124,33 +138,56 @@ const Register = () => {
             </label>
 
             <div className="relative">
-            <input
-              id="passwordConfirmation"
-              type={showPassConfirmation ? "text" : "password"}
-              name="passwordConfirmation"
-              required
-              placeholder="Confirme sua senha"
-              value={passwordConfirmation}
-              onChange={(e) => setPasswordConfirmation(e.target.value)}
-              className="w-full text-gray-900 rounded-lg border border-gray-300 px-4 py-3 pr-12 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
-            <button
+              <input
+                id="passwordConfirmation"
+                type={showPassConfirmation ? "text" : "password"}
+                name="passwordConfirmation"
+                required
+                placeholder="Confirme sua senha"
+                value={passwordConfirmation}
+                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                className="w-full text-gray-900 rounded-lg border border-gray-300 px-4 py-3 pr-12 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+              <button
                 type="button"
                 onClick={() => setPassConfirmation(!showPassConfirmation)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
-                {showPassConfirmation ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                {showPassConfirmation ? (
+                  <FaEyeSlash size={18} />
+                ) : (
+                  <FaEye size={18} />
+                )}
               </button>
             </div>
           </div>
         </div>
-
         <button
           type="submit"
-          className="w-full mt-8 rounded-lg bg-indigo-600 py-3 text-lg font-semibold text-white transition hover:bg-indigo-700"
+          disabled={loading}
+          className="w-full mt-8 rounded-lg bg-indigo-600 py-3 text-lg font-semibold text-white disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          Criar Conta
+          {loading ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              <span>Criando conta...</span>
+            </div>
+          ) : (
+            "Criar Conta"
+          )}
         </button>
+        {loading && (
+          <div className="mt-4 rounded-lg bg-blue-100 p-3 text-blue-700">
+            Aguarde, estamos criando sua conta...
+          </div>
+        )}
+        {success && (
+          <div className="mt-4 flex items-center gap-2 rounded-xl border-l-4 border-green-500 bg-green-100 p-4 text-green-700 shadow-sm">
+            <span className="text-xl">✅</span>
+            <p>{success}</p>
+          </div>
+        )}
+
         {error && (
           <div className="mt-4 flex items-center gap-2 rounded-xl border-l-4 border-red-500 bg-red-100 p-4 text-red-700 shadow-sm">
             <span className="text-xl">🚫</span>
